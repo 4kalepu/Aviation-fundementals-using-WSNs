@@ -1,225 +1,99 @@
-#ifndef __BOSCH_BMA400_H__
-#define __BOSCH_BMA400_H__
+/* SPDX-License-Identifier: GPL-2.0-only */
+/*
+ * Register constants and other forward declarations needed by the bma400
+ * sources.
+ *
+ * Copyright 2019 Dan Robertson <dan@dlrobertson.com>
+ */
 
-#include <Arduino.h>
-#include <Wire.h>
+#ifndef _BMA400_H_
+#define _BMA400_H_
 
+#include <linux/bits.h>
+#include <linux/regmap.h>
 
-#define BMA400_ADDRESS                  0x15 // default setting
+/*
+ * Read-Only Registers
+ */
 
-#define BMA400_CHIPID                   0x00
-#define BMA400_ERR_REG                  0x02
-#define BMA400_STATUS                   0x03
+/* Status and ID registers */
+#define BMA400_CHIP_ID_REG          0x00
+#define BMA400_ERR_REG              0x02
+#define BMA400_STATUS_REG           0x03
 
-#define BMA400_ACC_X_LSB                0x04
-#define BMA400_ACC_X_MSB                0x05
-#define BMA400_ACC_Y_LSB                0x06
-#define BMA400_ACC_Y_MSB                0x07
-#define BMA400_ACC_Z_LSB                0x08
-#define BMA400_ACC_Z_MSB                0x09
+/* Acceleration registers */
+#define BMA400_X_AXIS_LSB_REG       0x04
+#define BMA400_X_AXIS_MSB_REG       0x05
+#define BMA400_Y_AXIS_LSB_REG       0x06
+#define BMA400_Y_AXIS_MSB_REG       0x07
+#define BMA400_Z_AXIS_LSB_REG       0x08
+#define BMA400_Z_AXIS_MSB_REG       0x09
 
-#define BMA400_SENSOR_TIME_0            0x0A
-#define BMA400_SENSOR_TIME_1            0x0B
-#define BMA400_SENSOR_TIME_2            0x0C
+/* Sensor time registers */
+#define BMA400_SENSOR_TIME0         0x0a
+#define BMA400_SENSOR_TIME1         0x0b
+#define BMA400_SENSOR_TIME2         0x0c
 
-#define BMA400_EVENT                    0x0D
+/* Event and interrupt registers */
+#define BMA400_EVENT_REG            0x0d
+#define BMA400_INT_STAT0_REG        0x0e
+#define BMA400_INT_STAT1_REG        0x0f
+#define BMA400_INT_STAT2_REG        0x10
 
-#define BMA400_INT_STAT0                0x0E
-#define BMA400_INT_STAT1                0x0F
-#define BMA400_INT_STAT2                0x10
+/* Temperature register */
+#define BMA400_TEMP_DATA_REG        0x11
 
-#define BMA400_TEMP_DATA                0x11
+/* FIFO length and data registers */
+#define BMA400_FIFO_LENGTH0_REG     0x12
+#define BMA400_FIFO_LENGTH1_REG     0x13
+#define BMA400_FIFO_DATA_REG        0x14
 
-#define BMA400_FIFO_LENGTH_0            0x12
-#define BMA400_FIFO_LENGTH_1            0x13
-#define BMA400_FIFO_DATA                0x14
+/* Step count registers */
+#define BMA400_STEP_CNT0_REG        0x15
+#define BMA400_STEP_CNT1_REG        0x16
+#define BMA400_STEP_CNT3_REG        0x17
+#define BMA400_STEP_STAT_REG        0x18
 
-#define BMA400_STEP_CNT_0               0x15
-#define BMA400_STEP_CNT_1               0x16
-#define BMA400_STEP_CNT_2               0x17
-#define BMA400_STEP_STAT                0x18
+/*
+ * Read-write configuration registers
+ */
+#define BMA400_ACC_CONFIG0_REG      0x19
+#define BMA400_ACC_CONFIG1_REG      0x1a
+#define BMA400_ACC_CONFIG2_REG      0x1b
+#define BMA400_CMD_REG              0x7e
 
-#define BMA400_ACC_CONFIG_0             0x19
-#define BMA400_ACC_CONFIG_1             0x1A
-#define BMA400_ACC_CONFIG_2             0x1B
+/* Chip ID of BMA 400 devices found in the chip ID register. */
+#define BMA400_ID_REG_VAL           0x90
 
-#define BMA400_INT_CONFIG_0             0x1F
-#define BMA400_INT_CONFIG_1             0x20
-#define BMA400_INT_1_MAP                0x21
-#define BMA400_INT_2_MAP                0x22
-#define BMA400_INT_1_2_MAP              0x23
-#define BMA400_INT_1_2_CTRL             0x24
+#define BMA400_LP_OSR_SHIFT         5
+#define BMA400_NP_OSR_SHIFT         4
+#define BMA400_SCALE_SHIFT          6
 
-#define BMA400_FIFO_CONFIG_0            0x26
-#define BMA400_FIFO_CONFIG_1            0x27
-#define BMA400_FIFO_CONFIG_2            0x28
-#define BMA400_FIFO_PWR_CONFIG          0x29
+#define BMA400_TWO_BITS_MASK        GENMASK(1, 0)
+#define BMA400_LP_OSR_MASK          GENMASK(6, 5)
+#define BMA400_NP_OSR_MASK          GENMASK(5, 4)
+#define BMA400_ACC_ODR_MASK         GENMASK(3, 0)
+#define BMA400_ACC_SCALE_MASK       GENMASK(7, 6)
 
-#define BMA400_AUTO_LOW_POW_0           0x2A
-#define BMA400_AUTO_LOW_POW_1           0x2B
-#define BMA400_AUTO_WAKE_UP_0           0x2C
-#define BMA400_AUTO_WAKE_UP_1           0x2D
-#define BMA400_WAKE_UP_INT_CONFIG_0     0x2F
-#define BMA400_WAKE_UP_INT_CONFIG_1     0x30
-#define BMA400_WAKE_UP_INT_CONFIG_2     0x31
-#define BMA400_WAKE_UP_INT_CONFIG_3     0x32
-#define BMA400_WAKE_UP_INT_CONFIG_4     0x33
+#define BMA400_ACC_ODR_MIN_RAW      0x05
+#define BMA400_ACC_ODR_LP_RAW       0x06
+#define BMA400_ACC_ODR_MAX_RAW      0x0b
 
-#define BMA400_ORIENTCH_CONFIG_0        0x35
-#define BMA400_ORIENTCH_CONFIG_1        0x36
-#define BMA400_ORIENTCH_CONFIG_2        0x37
-#define BMA400_ORIENTCH_CONFIG_3        0x38
-#define BMA400_ORIENTCH_CONFIG_4        0x39
-#define BMA400_ORIENTCH_CONFIG_5        0x3A
-#define BMA400_ORIENTCH_CONFIG_6        0x3B
-#define BMA400_ORIENTCH_CONFIG_7        0x3C
-#define BMA400_ORIENTCH_CONFIG_8        0x3D
-#define BMA400_ORIENTCH_CONFIG_9        0x3E
+#define BMA400_ACC_ODR_MAX_HZ       800
+#define BMA400_ACC_ODR_MIN_WHOLE_HZ 25
+#define BMA400_ACC_ODR_MIN_HZ       12
 
-#define BMA400_GEN_1_INT_CONFIG_0       0x3F
-#define BMA400_GEN_1_INT_CONFIG_1       0x40
-#define BMA400_GEN_1_INT_CONFIG_2       0x41
-#define BMA400_GEN_1_INT_CONFIG_3       0x42
-#define BMA400_GEN_1_INT_CONFIG_3_1     0x43
-#define BMA400_GEN_1_INT_CONFIG_4       0x44
-#define BMA400_GEN_1_INT_CONFIG_5       0x45
-#define BMA400_GEN_1_INT_CONFIG_6       0x46
-#define BMA400_GEN_1_INT_CONFIG_7       0x47
-#define BMA400_GEN_1_INT_CONFIG_8       0x48
-#define BMA400_GEN_1_INT_CONFIG_9       0x49
+#define BMA400_SCALE_MIN            38357
+#define BMA400_SCALE_MAX            306864
 
-#define BMA400_GEN_2_INT_CONFIG_0       0x4A
-#define BMA400_GEN_2_INT_CONFIG_1       0x4B
-#define BMA400_GEN_2_INT_CONFIG_2       0x4C
-#define BMA400_GEN_2_INT_CONFIG_3       0x4D
-#define BMA400_GEN_2_INT_CONFIG_3_1     0x4E
-#define BMA400_GEN_2_INT_CONFIG_4       0x4F
-#define BMA400_GEN_2_INT_CONFIG_5       0x50
-#define BMA400_GEN_2_INT_CONFIG_6       0x51
-#define BMA400_GEN_2_INT_CONFIG_7       0x52
-#define BMA400_GEN_2_INT_CONFIG_8       0x53
-#define BMA400_GEN_2_INT_CONFIG_9       0x54
+#define BMA400_NUM_REGULATORS       2
+#define BMA400_VDD_REGULATOR        0
+#define BMA400_VDDIO_REGULATOR      1
 
-#define BMA400_ACT_CH_CONFIG_0          0x55
-#define BMA400_ACT_CH_CONFIG_1          0x56
+extern const struct regmap_config bma400_regmap_config;
 
-#define BMA400_TAP_CONFIG_0             0x57
-#define BMA400_TAP_CONFIG_1             0x58
+int bma400_probe(struct device *dev, struct regmap *regmap, const char *name);
 
-#define BMA400_STEP_COUNTER_CONFIG_0    0x59
-#define BMA400_STEP_COUNTER_CONFIG_1    0x5A
-#define BMA400_STEP_COUNTER_CONFIG_2    0x5B
-#define BMA400_STEP_COUNTER_CONFIG_3    0x5C
-#define BMA400_STEP_COUNTER_CONFIG_4    0x5D
-#define BMA400_STEP_COUNTER_CONFIG_5    0x5E
-#define BMA400_STEP_COUNTER_CONFIG_6    0x5F
-#define BMA400_STEP_COUNTER_CONFIG_7    0x60
-#define BMA400_STEP_COUNTER_CONFIG_8    0x61
-#define BMA400_STEP_COUNTER_CONFIG_9    0x62
-#define BMA400_STEP_COUNTER_CONFIG_10   0x63
-#define BMA400_STEP_COUNTER_CONFIG_11   0x64
-#define BMA400_STEP_COUNTER_CONFIG_12   0x65
-#define BMA400_STEP_COUNTER_CONFIG_13   0x66
-#define BMA400_STEP_COUNTER_CONFIG_14   0x67
-#define BMA400_STEP_COUNTER_CONFIG_15   0x68
-#define BMA400_STEP_COUNTER_CONFIG_16   0x69
-#define BMA400_STEP_COUNTER_CONFIG_17   0x6A
-#define BMA400_STEP_COUNTER_CONFIG_18   0x6B
-#define BMA400_STEP_COUNTER_CONFIG_19   0x6C
-#define BMA400_STEP_COUNTER_CONFIG_20   0x6D
-#define BMA400_STEP_COUNTER_CONFIG_21   0x6E
-#define BMA400_STEP_COUNTER_CONFIG_22   0x6F
-#define BMA400_STEP_COUNTER_CONFIG_23   0x70
-#define BMA400_STEP_COUNTER_CONFIG_24   0x71
-
-#define BMA400_IF_CONF                  0x7C
-#define BMA400_SELF_TEST                0x7D
-#define BMA400_CMD                      0x7E
-
-enum power_type_t { // power mode
-    SLEEP = 0x00, // Stop conversion, the lowest power mode
-    LOW_POWER = 0x01, //
-    NORMAL = 0x02, //
-};
-
-enum scale_type_t { // measurement rage
-    RANGE_2G = 0x00, //
-    RANGE_4G = 0x01, //
-    RANGE_8G = 0x02, //
-    RANGE_16G = 0x03, //
-};
-
-enum odr_type_t { // output data rate
-    ODR_12 = 0x00, //
-    ODR_25 = 0x06, //
-    ODR_50 = 0x07, //
-    ODR_100 = 0x08, //
-    ODR_200 = 0x09, //
-    ODR_400 = 0x0A, //
-    ODR_800 = 0x0B, //
-};
-
-enum filter_type_t{ // source for data registers
-	ACC_FILT1 = 0x00,
-	ACC_FILT2 = 0x01,
-	ACC_FILT_LP = 0x02,
-	ACC_FILT11  = 0X03,
-};
-
-enum overSampling_rate_t {
-	OSR_LOWEST=0x00,
-	OSR_LOW= 0x01,
-	OSR_HIGH=0x03,
-	OSR_HIGHEST=0x03,
-};
-
-class BMA400 {
-  public:
-
-    BMA400(void);
-
-    bool isConnection(void);
-
-    void initialize(void);
-
-    void setPoweMode(power_type_t mode);
-    void setFullScaleRange(scale_type_t range);
-    void setOutputDataRate(odr_type_t odr);
-    void setFilter(filter_type_t filter);
-    void setOSR(overSampling_rate_t overSampling); 	
-    void enableGen1(void);
-    void setRouteGen1(void);
-    void configIntPin(void);  
-	void setLatch(); 
-
-    void getAcceleration(float* x, float* y, float* z);
-    float getAccelerationX(void);
-    float getAccelerationY(void);
-    float getAccelerationZ(void);
-
-    int16_t getTemperature(void);
-
-    uint8_t getDeviceID(void);
-
-    void reset(void);
-    
-    void readwrite(uint8_t reg, uint8_t* buf, uint16_t len, uint8_t rw);
-    
-    bool read0x0e();
-
-  private:
-
-    void write8(uint8_t reg, uint8_t val);
-    uint8_t read8(uint8_t reg);
-    uint16_t read16(uint8_t reg);
-    uint32_t read24(uint8_t reg);
-    void read(uint8_t reg, uint8_t* buf, uint16_t len);
-		
-    float accRange;
-    uint8_t devAddr;
-
-};
-
-extern BMA400 bma400;
+int bma400_remove(struct device *dev);
 
 #endif
