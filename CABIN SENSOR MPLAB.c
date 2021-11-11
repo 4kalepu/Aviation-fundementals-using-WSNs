@@ -1,25 +1,26 @@
 //CABIN SENSOR
-#include <xc.h>
+#include <xc.h>        //to access compiler
 
 // CONFIG1H
+//pragma is a compiler directive that are machine or OS specific
 
-#pragma config OSC = HS // Oscillator Selection bits (HS oscillator)
+#pragma config OSC = HS // Oscillator Selection bits (HS- high speed oscillator)
 
-#pragma config FCMEN = OFF // Fail-Safe Clock Monitor Enable bit (Fail-Safe Clock Monitor disabled)
+#pragma config FCMEN = OFF // Fail-Safe Clock Monitor Enable bit (Fail-Safe Clock Monitor disabled) as we are using HS osc we dont need FCMEN
 
-#pragma config IESO = OFF // Internal/External Oscillator Switchover bit (Oscillator Switchover mode disabled)
+#pragma config IESO = OFF // Internal/External Oscillator Switchover bit (Oscillator Switchover mode disabled) no FCMEN no need of auto mode
 
 // CONFIG2L
 
-#pragma config PWRT = OFF // Power-up Timer Enable bit (PWRT disabled)
+#pragma config PWRT = OFF // Power-up Timer Enable bit (PWRT disabled) puts some delay after power-up or brown out reset
 
 #pragma config BOREN = SBORDIS // Brown-out Reset Enable bits (Brown-out Reset enabled in hardware only (SBOREN is disabled))
 
-#pragma config BORV = 3 // Brown Out Reset Voltage bits (Minimum setting)
+#pragma config BORV = 3 // Brown Out Reset Voltage bits (Minimum setting) - its resets when volatge is less than the required value here it is 3.
 
 // CONFIG2H
 
-#pragma config WDT = OFF // Watchdog Timer Enable bit (WDT disabled (control is placed on the SWDTEN bit))
+#pragma config WDT = OFF // Watchdog Timer Enable bit (WDT disabled (control is placed on the SWDTEN bit)) when m/c is in endless loop then after some given time to WDT it resets.
 
 #pragma config WDTPS = 32768 // Watchdog Timer Postscale Select bits (1:32768)
 
@@ -290,7 +291,7 @@ void main (void)
 {
 
 Init_IO();
-
+*
 float cabin_temp,fuel_temp;
 
 MRF24J40Init(); //initialise IEEE 802.15.4 transceiver
